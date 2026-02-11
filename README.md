@@ -1,0 +1,47 @@
+﻿# Health Guru AI
+
+An AI-powered health assistant that:
+- Extracts nutrition data from food labels using OCR
+- Parses macros from noisy text
+- Estimates calories and health scores
+- Provides explainable health guidance
+
+Tech Stack:
+- Python 3.11
+- FastAPI
+- Streamlit
+- EasyOCR
+- PyTorch
+
+
+SYSTEM ARCHITECTURE DESIGN:
+## Project Structure
+
+```text
+HEALTH_GURU/
+│
+├── app/
+│   ├── main.py              # FastAPI entry point
+│   └── routes.py            # API routes
+│
+├── models/
+│   ├── food_cnn.py          # Image recognition model
+│   └── nlp_model.py         # Text analysis model
+│
+├── services/
+│   ├── calorie_service.py   # Calorie calculation logic
+│   └── prediction_service.py # Model inference orchestration
+│
+├── data/
+│   ├── food_dataset/        # Training/Testing images
+│   └── nutrition.csv        # Nutritional reference data
+│
+├── utils/
+│   ├── preprocessing.py     # Data cleaning and image processing
+│   └── helpers.py           # General utility functions
+│
+├── frontend/
+│   └── index.html           # Simple UI for interaction
+│
+└── requirements.txt         # Project dependencies
+
