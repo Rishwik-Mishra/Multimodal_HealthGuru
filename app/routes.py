@@ -27,7 +27,7 @@ def predict_food(query: str):
             total_fat += nutrition["fat"] * multiplier
 
             detailed_breakdown.append({
-                "food": item["food"],
+                "food": nutrition["food_matched"],
                 "quantity": multiplier,
                 "calories_per_unit": nutrition["calories"],
                 "protein_per_unit": nutrition["protein"],

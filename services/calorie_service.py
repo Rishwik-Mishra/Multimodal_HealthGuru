@@ -1,18 +1,24 @@
-import pandas as pd
+from database.session import SessionLocal
+from database.models import Food
 
-df = pd.read_csv("data/nutrition.csv")
 
-def get_nutrition(food_name: str):
-    food_name = food_name.lower()
-    result = df[df["food"] == food_name]
+def calculate_macros(food_name: str, grams: float):
+    db = SessionLocal()
 
-    if not result.empty:
-        row = result.iloc[0]
-        return {
-            "calories": int(row["calories"]),
-            "protein": float(row["protein"]),
-            "carbs": float(row["carbs"]),
-            "fat": float(row["fat"])
-        }
-    else:
-        return None
+    food = db.query(Food).filter(Food.name == food_name.lower()).first()
+
+    if not food:
+        db.close()
+        return {"error": "Food not found in database"}
+
+    factor = grams / 100.0
+
+    result = {
+        "calories": food.calories_100g * factor,
+        "protein": (food.protein_100g or 0) * factor,
+        "carbs": (food.carbs_100g or 0) * factor,
+        "fat": (food.fat_100g or 0) * factor,
+    }
+
+    db.close()
+    return result

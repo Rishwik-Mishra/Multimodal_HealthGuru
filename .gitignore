@@ -3,3 +3,10 @@ __pycache__/
 *.pyc
 .env
 .vscode/
+data/food_images/
+# Ignore trained models
+*.keras
+*.h5
+.env
+__pycache__/
+*.pyc
