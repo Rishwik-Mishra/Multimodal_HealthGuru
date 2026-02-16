@@ -1,4 +1,10 @@
 import spacy
+from services.portion_service import get_portion_multiplier
+from services.portion_service import PORTION_MULTIPLIERS
+
+MEASUREMENT_WORDS = {
+    "plate", "bowl", "slice", "cup", "gram", "kg", "piece"
+}
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -21,24 +27,28 @@ def extract_food_items(text: str):
 
     food_items = []
     quantity = 1
+    portion_multiplier = 1
 
     for token in doc:
 
-        # Handle numeric digits
         if token.like_num:
             if token.text.isdigit():
                 quantity = int(token.text)
             elif token.text in WORD_NUMBERS:
                 quantity = WORD_NUMBERS[token.text]
-            else:
-                quantity = 1
 
-        # Handle nouns (food words)
-        elif token.pos_ == "NOUN":
+        elif token.text in PORTION_MULTIPLIERS:
+            portion_multiplier = get_portion_multiplier(token.text)
+
+        elif token.pos_ == "NOUN" and token.lemma_ not in MEASUREMENT_WORDS:
+            final_quantity = quantity * portion_multiplier
+
             food_items.append({
                 "food": token.lemma_,
-                "quantity": quantity
+                "quantity": final_quantity
             })
+
             quantity = 1
+            portion_multiplier = 1
 
     return food_items
