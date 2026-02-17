@@ -18,9 +18,12 @@ class Food(Base):
     fat_100g = Column(Float)
     fiber_100g = Column(Float)
 
+    sugar_100g = Column(Float)
+    sat_fat_100g = Column(Float)
+    sodium_mg_100g = Column(Float)
+
     portions = relationship("Portion", back_populates="food", cascade="all, delete")
     logs = relationship("DailyLog", back_populates="food")
-
 
 class Portion(Base):
     __tablename__ = "portions"

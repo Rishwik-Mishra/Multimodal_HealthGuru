@@ -1,3 +1,5 @@
-from services.calorie_service import calculate_macros
+from database.session import SessionLocal
+from database.models import Food
 
-print(calculate_macros("pizza", 200))
+db = SessionLocal()
+print(db.query(Food).count())
