@@ -25,6 +25,30 @@ class Food(Base):
     portions = relationship("Portion", back_populates="food", cascade="all, delete")
     logs = relationship("DailyLog", back_populates="food")
 
+class Dish(Base):
+    __tablename__ = "dishes"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, nullable=False)
+
+    calories_100g = Column(Float, nullable=False)
+    protein_100g = Column(Float)
+    carbs_100g = Column(Float)
+    fat_100g = Column(Float)
+    fiber_100g = Column(Float)
+
+    sugar_100g = Column(Float)
+    sat_fat_100g = Column(Float)
+    sodium_mg_100g = Column(Float)
+
+class DishPortion(Base):
+    __tablename__ = "dish_portions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dish_id = Column(Integer, ForeignKey("dishes.id", ondelete="CASCADE"))
+    portion_name = Column(String)
+    grams = Column(Float, nullable=False)
+
 class Portion(Base):
     __tablename__ = "portions"
 
