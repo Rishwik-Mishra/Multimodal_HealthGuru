@@ -10,3 +10,9 @@ data/food_images/
 .env
 __pycache__/
 *.pyc
+venv/
+__pycache__/
+*.pyc
+.env
+data/
+*.log

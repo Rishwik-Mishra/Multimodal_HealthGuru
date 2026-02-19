@@ -45,9 +45,18 @@ class DishPortion(Base):
     __tablename__ = "dish_portions"
 
     id = Column(Integer, primary_key=True, index=True)
-    dish_id = Column(Integer, ForeignKey("dishes.id", ondelete="CASCADE"))
+    dish_id = Column(Integer, ForeignKey("dishes.id"))
     portion_name = Column(String)
-    grams = Column(Float, nullable=False)
+    grams = Column(Float)
+
+class IngredientPortion(Base):
+    __tablename__ = "ingredient_portions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ingredient_id = Column(Integer, ForeignKey("foundation_foods.id"))
+    portion_name = Column(String)
+    grams = Column(Float)
+
 
 class Portion(Base):
     __tablename__ = "portions"

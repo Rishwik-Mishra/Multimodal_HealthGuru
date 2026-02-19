@@ -27,8 +27,9 @@ def get_db():
 @app.post("/predict")
 async def predict_food(
     file: UploadFile = File(...),
-    grams: float = Query(None),
-    portion: str = Query(None),
+    grams: float = Query(None, description="Direct grams input"),
+    portion: str = Query(None, description="Portion name (e.g., piece, bowl, slice)"),
+    portion_count: int = Query(1, description="Number of portions"),
     db: Session = Depends(get_db)
 ):
     image_bytes = await file.read()
@@ -42,24 +43,55 @@ async def predict_food(
             "cnn_prediction": prediction
         }
 
-    # Determine grams
-    if grams:
+    # ----------------------------
+    # Resolve final grams properly
+    # ----------------------------
+
+    final_grams = None
+
+    # 1️⃣ If grams directly provided
+    if grams is not None:
+        if grams <= 0:
+            return {"error": "Grams must be greater than 0"}
         final_grams = grams
 
-    elif portion and item_type == "dish":
-        from database.models import DishPortion
-        portion_obj = db.query(DishPortion).filter(
-            DishPortion.dish_id == item.id,
-            DishPortion.portion_name == portion
-        ).first()
+    # 2️⃣ If portion provided
+    elif portion:
+        portion = portion.strip().lower()
+
+        if item_type == "dish":
+            from database.models import DishPortion
+
+            portion_obj = db.query(DishPortion).filter(
+                DishPortion.dish_id == item.id,
+                DishPortion.portion_name.ilike(f"%{portion}%")
+            ).first()
+
+
+        else:
+            from database.models import IngredientPortion
+
+            portion_obj = db.query(IngredientPortion).filter(
+                IngredientPortion.ingredient_id == item.id,
+                IngredientPortion.portion_name.ilike(f"%{portion}%")
+            ).first()
+
 
         if not portion_obj:
             return {"error": "Invalid portion selected"}
 
-        final_grams = portion_obj.grams
+        if portion_count <= 0:
+            return {"error": "Portion count must be greater than 0"}
 
+        final_grams = portion_obj.grams * portion_count
+
+    # 3️⃣ Default fallback
     else:
-        final_grams = 100  # default
+        final_grams = 100
+
+    # ----------------------------
+    # Calculate macros
+    # ----------------------------
 
     macros = calculate_scaled_macros(item, final_grams)
 
@@ -70,4 +102,3 @@ async def predict_food(
         "grams_used": final_grams,
         "macros": macros
     }
-
