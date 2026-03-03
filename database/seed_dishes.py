@@ -1,35 +1,17 @@
-import json
 from sqlalchemy.orm import Session
 from database.session import engine
 from database.models import Dish
 from database.curated_dish_data import CURATED_DISH_NUTRITION
 
-CLASS_NAMES_PATH = "models/cnn/class_names.json"
 
-# Fallback average values
-DEFAULT_VALUES = {
-    "calories": 200,
-    "protein": 8,
-    "carbs": 25,
-    "fat": 8,
-    "fiber": 2,
-    "sugar": 5,
-    "sat_fat": 3,
-    "sodium": 300
-}
-
-
-def seed_dishes_from_cnn():
-    with open(CLASS_NAMES_PATH, "r") as f:
-        class_names = json.load(f)
-
+def seed_dishes():
     with Session(engine) as session:
 
         session.query(Dish).delete()
 
-        for name in class_names:
+        seeded_count = 0
 
-            nutrition = CURATED_DISH_NUTRITION.get(name, DEFAULT_VALUES)
+        for name, nutrition in CURATED_DISH_NUTRITION.items():
 
             dish = Dish(
                 name=name,
@@ -44,11 +26,12 @@ def seed_dishes_from_cnn():
             )
 
             session.add(dish)
+            seeded_count += 1
 
         session.commit()
 
-    print(f"Seeded {len(class_names)} dishes with curated + default nutrition.")
+    print(f"Seeded {seeded_count} dishes from curated dataset.")
 
 
 if __name__ == "__main__":
-    seed_dishes_from_cnn()
+    seed_dishes()

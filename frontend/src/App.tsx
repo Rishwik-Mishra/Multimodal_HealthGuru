@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import UploadCard from "./components/UploadCard";
+import ManualEntryCard from "./components/ManualEntryCard";
 import {
   logFood,
   getDailySummary,
@@ -104,6 +105,8 @@ export default function App() {
         <div className="grid md:grid-cols-2 gap-6">
           {/* LEFT SIDE */}
           <div className="space-y-6">
+            <ManualEntryCard onLogged={refreshData} />
+
             <UploadCard
               onPrediction={(data) => {
                 setPrediction(data);

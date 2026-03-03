@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, TIMESTAMP
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime,TIMESTAMP
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
 
@@ -53,7 +53,7 @@ class IngredientPortion(Base):
     __tablename__ = "ingredient_portions"
 
     id = Column(Integer, primary_key=True, index=True)
-    ingredient_id = Column(Integer, ForeignKey("foundation_foods.id"))
+    ingredient_id = Column(Integer, ForeignKey("foods.id"))
     portion_name = Column(String)
     grams = Column(Float)
 
@@ -86,3 +86,41 @@ class DailyLog(Base):
     consumed_at = Column(TIMESTAMP, server_default=func.now())
 
     food = relationship("Food", back_populates="logs")
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    logs = relationship("FoodLog", back_populates="user")
+
+class FoodLog(Base):
+    __tablename__ = "food_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+    food_type = Column(String, nullable=False)
+    food_id = Column(Integer, nullable=False)
+    food_name = Column(String, nullable=False)
+
+    quantity_grams = Column(Float, nullable=False)
+    portion_label = Column(String, nullable=True)
+
+    calories = Column(Float, nullable=False)
+    protein = Column(Float, nullable=False)
+    carbs = Column(Float, nullable=False)
+    fat = Column(Float, nullable=False)
+    fiber = Column(Float, nullable=False)
+    sugar = Column(Float, nullable=False)
+    sat_fat = Column(Float, nullable=False)
+    sodium_mg = Column(Float, nullable=False)
+
+    logged_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="logs")
