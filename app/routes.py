@@ -1,46 +1,53 @@
-from fastapi import APIRouter
-from services.calorie_service import get_nutrition
-from services.nlp_service import extract_food_items
+from fastapi import APIRouter, UploadFile, File, Query, HTTPException
+from typing import Optional
+
+from services.image_service import predict_image
+from services.mapping_service import resolve_food_mapping
+from services.portion_service import resolve_quantity_in_grams
+from services.calorie_service import calculate_scaled_macros
 
 router = APIRouter()
 
-@router.get("/predict")
-def predict_food(query: str):
-    items = extract_food_items(query)
 
-    total_calories = 0
-    total_protein = 0
-    total_carbs = 0
-    total_fat = 0
+@router.post("/predict")
+async def predict_food(
+    file: UploadFile = File(...),
+    grams: Optional[float] = Query(None, description="Direct quantity in grams"),
+    portion: Optional[str] = Query(None, description="Portion name (e.g., piece, bowl, slice)"),
+    portion_count: Optional[int] = Query(1, description="Number of portions")
+):
+    try:
+        # 1️⃣ CNN Prediction
+        label, confidence = predict_image(file)
 
-    detailed_breakdown = []
+        # 2️⃣ Map label → Dish or Ingredient
+        food_record, food_type = resolve_food_mapping(label)
 
-    for item in items:
-        nutrition = get_nutrition(item["food"])
+        if not food_record:
+            raise HTTPException(status_code=404, detail="Food not found in database")
 
-        if nutrition:
-            multiplier = item["quantity"]
+        # 3️⃣ Resolve final grams
+        quantity_grams = resolve_quantity_in_grams(
+            food_id=food_record.id,
+            food_type=food_type,
+            grams=grams,
+            portion=portion,
+            portion_count=portion_count
+        )
 
-            total_calories += nutrition["calories"] * multiplier
-            total_protein += nutrition["protein"] * multiplier
-            total_carbs += nutrition["carbs"] * multiplier
-            total_fat += nutrition["fat"] * multiplier
+        # 4️⃣ Calculate scaled macros
+        macros = calculate_scaled_macros(
+            food_record=food_record,
+            quantity_grams=quantity_grams
+        )
 
-            detailed_breakdown.append({
-                "food": nutrition["food_matched"],
-                "quantity": multiplier,
-                "calories_per_unit": nutrition["calories"],
-                "protein_per_unit": nutrition["protein"],
-                "carbs_per_unit": nutrition["carbs"],
-                "fat_per_unit": nutrition["fat"]
-            })
-
-    return {
-        "items": detailed_breakdown,
-        "totals": {
-            "calories": round(total_calories, 2),
-            "protein": round(total_protein, 2),
-            "carbs": round(total_carbs, 2),
-            "fat": round(total_fat, 2)
+        return {
+            "label": label,
+            "confidence": confidence,
+            "food_type": food_type,
+            "quantity_grams": quantity_grams,
+            "macros": macros
         }
-    }
+
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))

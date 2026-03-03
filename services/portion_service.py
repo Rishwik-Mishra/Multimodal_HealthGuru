@@ -1,12 +1,58 @@
-PORTION_MULTIPLIERS = {
-    "half": 0.5,
-    "quarter": 0.25,
-    "double": 2,
-    "bowl": 1.5,
-    "plate": 2,
-    "slice": 0.5,
-    "cup": 1.2
-}
+from sqlalchemy import func
+from database.session import SessionLocal
+from database.models import DishPortion, IngredientPortion
 
-def get_portion_multiplier(token_text):
-    return PORTION_MULTIPLIERS.get(token_text, 1)
+
+def resolve_quantity_in_grams(
+    food_id: int,
+    food_type: str,
+    grams=None,
+    portion=None,
+    portion_count: int = 1
+):
+    """
+    Resolves final quantity in grams based on:
+    - Direct grams input
+    - Portion name + portion_count
+    """
+
+    if grams is not None:
+        if grams <= 0:
+            raise ValueError("Grams must be greater than 0")
+        return grams
+
+    if portion:
+        portion = portion.strip().lower()
+
+        db = SessionLocal()
+
+        if food_type == "dish":
+            portion_record = (
+                db.query(DishPortion)
+                .filter(
+                    DishPortion.dish_id == food_id,
+                    func.lower(DishPortion.portion_name) == portion
+                )
+                .first()
+            )
+        else:
+            portion_record = (
+                db.query(IngredientPortion)
+                .filter(
+                    IngredientPortion.ingredient_id == food_id,
+                    func.lower(IngredientPortion.portion_name) == portion
+                )
+                .first()
+            )
+
+        db.close()
+
+        if not portion_record:
+            raise ValueError("Invalid portion size")
+
+        if portion_count <= 0:
+            raise ValueError("Portion count must be greater than 0")
+
+        return portion_record.grams * portion_count
+
+    raise ValueError("Either grams or portion must be provided")
